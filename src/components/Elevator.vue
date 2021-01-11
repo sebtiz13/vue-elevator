@@ -8,7 +8,7 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue, Prop } from 'vue-property-decorator'
+import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 
 import { Person, Direction } from '../interfaces'
 
@@ -19,8 +19,39 @@ export default class Elevator extends Vue {
   @Prop({ default: Direction.UP }) readonly direction!: Direction
   @Prop({ default: () => [] }) readonly waitingPersons!: Person[]
 
+  get schedule (): number[] {
+    // Extract all levels
+    const levels = this.waitingPersons.reduce(
+      (acc, { current, level }) => ([...acc, current, level]),
+      ([] as number[])
+    )
+
+    // Return sorted uniques levels except current level
+    return [...new Set(levels)]
+      .filter((level) => level !== this.level)
+      .sort()
+  }
+
   get directionChar (): string {
     return this.direction === Direction.DOWN ? '&darr;' : '&uarr;'
+  }
+
+  /**
+   * Use watch to move elevator
+   * schedule are updated with new persons
+   * use immediate (on mount) because when elevator change of level, the component are re created
+   */
+  @Watch('schedule', { immediate: true })
+  scheduleUpdated (schedule: number[]) {
+    if (schedule.length > 0) {
+      this.move()
+    }
+  }
+
+  move () {
+    setTimeout(() => {
+      this.$emit('move', this.level + this.direction)
+    }, 2500)
   }
 }
 </script>

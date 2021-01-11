@@ -10,6 +10,7 @@
           <Elevator
             v-if="level.level === elevator.level"
             v-bind="elevator"
+            @move="moveElevator"
           />
         </td>
         <td class="colButtons">
@@ -27,13 +28,13 @@
 </template>
 
 <script lang="ts">
-import { Component, Vue } from 'vue-property-decorator'
+import { Component, Vue, Watch } from 'vue-property-decorator'
 
 import Elevator from './components/Elevator.vue'
 import Button from './components/Button.vue'
 import Level from './components/Level.vue'
 
-import { Direction, LevelState, ElevatorState } from './interfaces'
+import { Person, Direction, LevelState, ElevatorState } from './interfaces'
 
 @Component({
   components: {
@@ -54,6 +55,22 @@ export default class App extends Vue {
     persons: []
   }
 
+  @Watch('levels', { deep: true })
+  levelsUpdated (levels: LevelState[]) {
+    const elevatorState = { ...this.elevator }
+    const waitingPersons = levels
+      .reduce(
+        (acc, { persons }) => ([...acc, ...persons]),
+        ([] as Person[])
+      )
+      .concat(this.elevator.persons)
+      .filter((person: Person) => person.difference !== 0)
+
+    elevatorState.waitingPersons = waitingPersons
+
+    this.elevator = elevatorState
+  }
+
   mounted () {
     const levels: LevelState[] = []
     for (let index = 0; index <= this.levelNb; index++) {
@@ -66,7 +83,52 @@ export default class App extends Vue {
   }
 
   changeLevel (newLevel: number, currentLevel: number) {
-    // TODO implement this
+    if (newLevel === currentLevel) {
+      alert('can\'t move to same level')
+      return
+    }
+
+    const person = new Person(currentLevel)
+    person.changeLevel(newLevel)
+
+    this.levels[currentLevel].persons.push(person)
+    this.handlePersons()
+  }
+
+  moveElevator (level: number) {
+    // If the elevator are on max level, he can only down
+    if ((this.levels.length - 1) < level || level < 0) {
+      console.error(`level "${level}" not exist`)
+      return
+    }
+    this.elevator = { ...this.elevator, level }
+    this.handlePersons()
+  }
+
+  handlePersons () {
+    const levels = [...this.levels]
+    const elevatorState = { ...this.elevator }
+    const { level } = elevatorState
+
+    const exitPersons = this.elevator.persons.filter((person) => person.level === level)
+    if (exitPersons.length > 0) {
+      // Remove persons from elevator
+      elevatorState.persons = this.elevator.persons.filter((person) => person.level !== level)
+      // Move persons to levels
+      levels[level].persons.push(...exitPersons.map((person) => {
+        // Update persons levels
+        person.update(level)
+        return person
+      }))
+    }
+
+    const enterPersons = this.levels[level].persons.filter(({ difference }) => difference > 0)
+    if (enterPersons.length > 0) {
+      levels[level].persons = levels[level].persons.filter((person) => !enterPersons.includes(person))
+      elevatorState.persons.push(...enterPersons)
+    }
+    this.levels = levels
+    this.elevator = elevatorState
   }
 }
 </script>
