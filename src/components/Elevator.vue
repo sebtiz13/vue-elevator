@@ -49,6 +49,18 @@ export default class Elevator extends Vue {
   }
 
   move () {
+    // Need to use non-null assertion because typescript not understand the guard "length > 0"
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const goToLevel = (this.schedule.find((level) =>
+      this.direction === Direction.DOWN ? this.level > level : this.level < level
+    ) ?? this.schedule.pop()) !
+
+    const direction = goToLevel < this.level ? Direction.DOWN : Direction.UP
+    // Only emit if it's realy different to prevent infinite react loop with schedule watch
+    if (direction !== this.direction) {
+      this.$emit('changeDirection', direction)
+    }
+
     setTimeout(() => {
       this.$emit('move', this.level + this.direction)
     }, 2500)

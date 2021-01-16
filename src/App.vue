@@ -11,6 +11,7 @@
             v-if="level.level === elevator.level"
             v-bind="elevator"
             @move="moveElevator"
+            @changeDirection="changeDirection"
           />
         </td>
         <td class="colButtons">
@@ -95,6 +96,11 @@ export default class App extends Vue {
     this.handlePersons()
   }
 
+  changeDirection (direction: Direction) {
+    this.elevator = { ...this.elevator, direction }
+    this.handlePersons()
+  }
+
   moveElevator (level: number) {
     // If the elevator are on max level, he can only down
     if ((this.levels.length - 1) < level || level < 0) {
@@ -122,7 +128,10 @@ export default class App extends Vue {
       }))
     }
 
-    const enterPersons = this.levels[level].persons.filter(({ difference }) => difference > 0)
+    const enterPersons = levels[level].persons.filter(({ difference }) => (
+      elevatorState.direction === Direction.DOWN ? difference < 0 : difference > 0
+    ))
+
     if (enterPersons.length > 0) {
       levels[level].persons = levels[level].persons.filter((person) => !enterPersons.includes(person))
       elevatorState.persons.push(...enterPersons)
