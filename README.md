@@ -1,3 +1,7 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/0c8aa539-2b97-40ec-a599-add927c8005a/deploy-status)](https://app.netlify.com/sites/vue-elevator/deploys)
+
+**[Demo](https://vue-elevator.netlify.app/)**
+
 # vue-elevator
 
 ## Project setup
