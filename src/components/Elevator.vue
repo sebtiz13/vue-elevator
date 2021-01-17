@@ -4,15 +4,26 @@
       class="elevator-direction"
       v-html="directionChar"
     />
+    <Person
+      v-for="(person, index) in persons"
+      :key="index"
+      v-bind="person"
+    />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue, Prop, Watch } from 'vue-property-decorator'
 
+import PersonCmp from './Person.vue'
+
 import { Person, Direction } from '../interfaces'
 
-@Component
+@Component({
+  components: {
+    Person: PersonCmp
+  }
+})
 export default class Elevator extends Vue {
   @Prop({ default: () => [] }) readonly persons!: Person[]
   @Prop({ default: 0 }) readonly level!: number
@@ -74,6 +85,9 @@ export default class Elevator extends Vue {
   height: 100%;
   width: 100%;
   background-color: rgb(221, 221, 221);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
 }
 
 .elevator-direction {
